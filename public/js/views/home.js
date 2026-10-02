@@ -14,11 +14,14 @@ export function render() {
   const goalDone = goals.filter((g) => g.done).length;
 
   const cards = [
-    { n: '0', t: 'Launch Pad', d: 'Set up accounts, rhythm and mindset. Capture your starting point.', href: '#/launch', pct: p.launch.pct },
-    { n: '1', t: 'Your Blueprint', d: 'What you say, who you say it to, and why it matters to you.', href: '#/blueprint', pct: p.blueprint.pct },
-    { n: '2', t: 'Formats', d: 'Package your message in formats built to perform. Find the ones that fit you.', href: '#/formats', pct: p.formats.pct },
-    { n: '3', t: 'Weekly Challenge', d: 'Publish at least one guided post and put it all into practice.', href: '#/challenge', pct: p.challenge.pct },
-    { n: '4', t: 'Week 1 Plan', d: 'Seven days of small tasks, check-ins and a Sunday review.', href: '#/plan', pct: p.plan.pct },
+    { n: '0', t: 'Launch Pad', d: 'Week 0. Set up accounts, rhythm and mindset. Capture your starting point.', href: '#/launch', pct: p.launch.pct },
+    { n: '1', t: 'Your Blueprint', d: 'Week 1. What you say, who you say it to, and why it matters to you.', href: '#/blueprint', pct: p.blueprint.pct },
+    { n: '▦', t: 'Formats', d: 'Week 1. Package your message in formats built to perform.', href: '#/formats', pct: p.formats.pct },
+    { n: '★', t: 'Weekly Challenge', d: 'Week 1. Publish at least one guided post.', href: '#/challenge', pct: p.challenge.pct },
+    { n: '☑', t: 'Week 1 Plan', d: 'Seven days of small tasks, check-ins and a review.', href: '#/plan', pct: p.plan.pct },
+    { n: '2', t: 'Formats and workflow', d: 'Week 2. Study what works, bank hooks, plan and batch a week, sketch an offer.', href: '#/week/2', pct: p.weeks[2].pct },
+    { n: '3', t: 'Content missions', d: 'Week 3. Give every post a job, read your numbers, build the path to conversations.', href: '#/week/3', pct: p.weeks[3].pct },
+    { n: '4', t: 'Stories and selling', d: 'Week 4. Stories, your pitch, a 30-day roadmap and your strategy one-pager.', href: '#/week/4', pct: p.weeks[4].pct },
   ];
 
   return h(
@@ -60,7 +63,7 @@ export function render() {
       h(
         'div',
         { class: 'card' },
-        h('div', { class: 'row between' }, h('h3', null, 'This week\'s goals'), h('span', { class: 'tag volt' }, `${goalDone}/${goals.length}`)),
+        h('div', { class: 'row between' }, h('h3', null, 'Week 1 goals'), h('span', { class: 'tag volt' }, `${goalDone}/${goals.length}`)),
         h('div', { class: 'stack', style: { '--gap': '8px', marginTop: '12px' } },
           goals.map((g) => h('div', { class: `goal${g.done ? ' done' : ''}`, style: { cursor: 'default' } }, h('span', { 'aria-hidden': 'true', style: { fontSize: '1.2rem' } }, g.done ? '✅' : '⬜'), h('div', null, h('b', null, g.title), h('span', null, g.detail || g.body)))),
         ),

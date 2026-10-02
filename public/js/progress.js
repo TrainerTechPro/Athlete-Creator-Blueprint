@@ -5,6 +5,9 @@ import { QUESTIONS, questionsFor } from './content/blueprint.js';
 import { START_QUESTIONS, LAUNCH_CHECKS } from './content/start.js';
 import { DAYS, GOALS } from './content/plan.js';
 import { wordCount } from './coach.js';
+import { WEEKS, ALL_WEEK_TASKS } from './content/weeks.js';
+import { offerChecks, pitchChecks, READINESS } from './content/sales.js';
+import { MISSIONS } from './content/missions.js';
 
 const pct = (done, total) => (total ? Math.round((done / total) * 100) : 0);
 const part = (done, total) => ({ done, total, pct: pct(done, total) });
@@ -58,10 +61,10 @@ export function progress() {
   const weekPosts = postsThisWeek().length;
   const posts = part(Math.min(goal, weekPosts), goal);
 
-  const overall = Math.round(
-    (launch.pct * 0.15 + blueprint.pct * 0.35 + formats.pct * 0.15 + challenge.pct * 0.1 + plan.pct * 0.1 + posts.pct * 0.15),
-  );
-  return { launch, blueprint, byPart, formats, challenge, plan, posts, overall, postGoal: goal, weekPosts };
+  const week1 = Math.round(blueprint.pct * 0.45 + formats.pct * 0.2 + challenge.pct * 0.15 + plan.pct * 0.1 + posts.pct * 0.1);
+  const weeks = { 2: weekProgress(2), 3: weekProgress(3), 4: weekProgress(4) };
+  const overall = Math.round(launch.pct * 0.1 + week1 * 0.35 + weeks[2].pct * 0.2 + weeks[3].pct * 0.2 + weeks[4].pct * 0.15);
+  return { launch, blueprint, byPart, formats, challenge, plan, posts, week1, weeks, overall, postGoal: goal, weekPosts };
 }
 
 export function postsThisWeek() {
@@ -112,5 +115,72 @@ export function nextAction() {
   if (p.weekPosts < p.postGoal)
     return { title: `Post (${p.weekPosts}/${p.postGoal} this week)`, desc: 'Done beats perfect. Log it so you can learn from it.', route: '#/challenge', cta: 'Pick a challenge' };
   if (unread > 0) return { title: 'Finish your starting-point reflections', desc: 'A few more minutes of honest writing.', route: '#/launch/start', cta: 'Continue' };
-  return { title: 'Review your week', desc: 'Look back, pick one lesson, set your commitment.', route: '#/plan', cta: 'Open the week plan' };
+  if (p.plan.pct < 60) return { title: 'Review your week', desc: 'Look back, pick one lesson, set your commitment.', route: '#/plan', cta: 'Open the week plan' };
+  for (const n of [2, 3, 4]) {
+    if (p.weeks[n].pct < 60) return { title: `Week ${n}: ${WEEKS[n].short}`, desc: WEEKS[n].tagline, route: WEEKS[n].route, cta: `Open Week ${n}` };
+  }
+  return { title: 'Review your strategy', desc: 'Everything in one place. Print it and commit to your next 30 days.', route: '#/tools/strategy', cta: 'Open my strategy' };
+}
+
+
+// ---------------------------------------------------------------- Weeks 2 to 4
+const recentPosts = (days) => {
+  const cutoff = Date.now() - days * 86400000;
+  return store.get('posts', []).filter((p) => p.date && new Date(p.date).getTime() >= cutoff);
+};
+
+export function weekAuto(n) {
+  const goal = CONFIG.postGoal[store.get('profile.level', 'beginner')] || 3;
+  const weekPosts = postsThisWeek().length;
+  const r14 = recentPosts(14);
+  const offer = store.get('offer', {});
+  const ladder = store.get('leads.ladder', {});
+  const readiness = store.get('readiness', {});
+  const roadmap = store.get('roadmap', {});
+  const strategy = store.get('strategy', {});
+  const pitch = store.get('pitch', {});
+  const common = { posts: weekPosts >= goal };
+  if (n === 2) {
+    return {
+      ...common,
+      refs: store.get('swipe', []).length >= 7,
+      hooks: store.get('hooks', []).length >= 10,
+      calendar: store.get('calendar', []).length >= 5,
+      offer: !!(offer.who?.trim() && offer.problem?.trim() && offer.promise?.trim()),
+    };
+  }
+  if (n === 3) {
+    const tagged = r14.filter((p) => MISSIONS.some((m) => m.id === p.mission));
+    return {
+      tagged: tagged.length >= 4,
+      allMissions: MISSIONS.every((m) => tagged.some((p) => p.mission === m.id)),
+      numbers: store.get('posts', []).filter((p) => Number(p.metrics?.views) > 0).length >= 3,
+      ladder: Object.values(ladder).filter((v) => (v || '').trim()).length >= 3,
+      ready: READINESS.every((q) => readiness.answers?.[q.id] !== undefined),
+    };
+  }
+  return {
+    ...common,
+    stories: store.get('stories', []).some((st) => Array.isArray(st.frames) && st.frames.filter((f) => (f?.text || '').trim()).length >= 5),
+    pitch: pitchChecks(pitch).filter((c) => c.ok).length >= 6,
+    roadmap: !!roadmap.path,
+    strategy: !!strategy.complete,
+  };
+}
+
+export function weekGoals(n) {
+  const cfg = WEEKS[n];
+  const manual = store.get(`weeks.w${n}.goals`, {});
+  const auto = weekAuto(n);
+  return cfg.goals.map((g) => ({ ...g, done: g.auto ? !!auto[g.auto] || !!manual[g.id] : !!manual[g.id], isAuto: !!g.auto }));
+}
+
+export function weekProgress(n) {
+  const goals = weekGoals(n);
+  const tasks = ALL_WEEK_TASKS(n);
+  const done = store.get(`weeks.w${n}.tasks`, {});
+  const goalsDone = goals.filter((g) => g.done).length;
+  const tasksDone = tasks.filter((t) => done[t.id]).length;
+  const pct = Math.round(((goalsDone / goals.length) * 0.6 + (tasksDone / tasks.length) * 0.4) * 100);
+  return { pct, goalsDone, goalsTotal: goals.length, tasksDone, tasksTotal: tasks.length };
 }

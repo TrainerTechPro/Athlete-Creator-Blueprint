@@ -17,6 +17,8 @@ import * as plan from './views/plan.js';
 import * as posts from './views/posts.js';
 import * as doc from './views/doc.js';
 import * as settings from './views/settings.js';
+import * as week from './views/week.js';
+import * as tools from './views/tools.js';
 
 const ROUTES = {
   '': home,
@@ -30,20 +32,28 @@ const ROUTES = {
   posts,
   doc,
   settings,
+  week,
+  tools,
 };
 
 const NAV = [
   { href: '#/', key: '', icon: '⌂', label: 'Home' },
-  { sep: 'The journey' },
+  { sep: 'Week 0 · Setup' },
   { href: '#/launch', key: 'launch', icon: '0', label: 'Launch Pad', prog: 'launch' },
+  { sep: 'Week 1 · Your strategy' },
   { href: '#/blueprint', key: 'blueprint', icon: '1', label: 'Your Blueprint', prog: 'blueprint' },
-  { href: '#/formats', key: 'formats', icon: '2', label: 'Formats', prog: 'formats' },
-  { href: '#/challenge', key: 'challenge', icon: '3', label: 'Weekly Challenge', prog: 'challenge' },
-  { href: '#/plan', key: 'plan', icon: '4', label: 'Week 1 Plan', prog: 'plan' },
+  { href: '#/formats', key: 'formats', icon: '▦', label: 'Formats', prog: 'formats' },
+  { href: '#/challenge', key: 'challenge', icon: '★', label: 'Weekly Challenge', prog: 'challenge' },
+  { href: '#/plan', key: 'plan', icon: '☑', label: 'Week 1 Plan', prog: 'plan' },
+  { sep: 'Weeks 2 to 4' },
+  { href: '#/week/2', key: 'week:2', icon: '2', label: 'Formats & workflow', prog: 'w2' },
+  { href: '#/week/3', key: 'week:3', icon: '3', label: 'Content missions', prog: 'w3' },
+  { href: '#/week/4', key: 'week:4', icon: '4', label: 'Stories & selling', prog: 'w4' },
   { sep: 'Tools' },
   { href: '#/lab', key: 'lab', icon: '✦', label: 'Idea Lab' },
   { href: '#/posts', key: 'posts', icon: '▶', label: 'Post Log' },
   { href: '#/doc', key: 'doc', icon: '▤', label: 'My Blueprint' },
+  { href: '#/tools/strategy', key: 'tools:strategy', icon: '★', label: 'Strategy one-pager' },
   { href: '#/settings', key: 'settings', icon: '⚙', label: 'Settings' },
 ];
 
@@ -88,15 +98,26 @@ document.addEventListener('keydown', (e) => {
 
 app.append(h('div', { class: 'shell' }, side, h('div', null, topbar, main)));
 
+function safeProgress() {
+  try {
+    return progress();
+  } catch (err) {
+    console.error('progress failed', err);
+    const z = { pct: 0 };
+    return { launch: z, blueprint: z, formats: z, challenge: z, plan: z, weeks: { 2: z, 3: z, 4: z }, overall: 0 };
+  }
+}
+
 function renderNav(activeKey) {
   clear(sideNav);
-  const p = progress();
+  const p = safeProgress();
   for (const item of NAV) {
     if (item.sep) {
       sideNav.append(h('div', { class: 'sep' }, item.sep));
       continue;
     }
-    const pct = item.prog ? p[item.prog].pct : null;
+    const src = item.prog === 'w2' ? p.weeks[2] : item.prog === 'w3' ? p.weeks[3] : item.prog === 'w4' ? p.weeks[4] : p[item.prog];
+    const pct = item.prog ? src.pct : null;
     sideNav.append(
       h(
         'a',
@@ -124,7 +145,7 @@ store.subscribe(() => {
 
 onRoute((route) => {
   const key = route.parts[0] || '';
-  activeKey = key;
+  activeKey = key === 'week' ? `week:${route.parts[1]}` : key === 'tools' ? (route.parts[1] === 'strategy' ? 'tools:strategy' : `week:${({ swipe: 2, hooks: 2, calendar: 2, edit: 2, discovery: 2, offer: 2, missions: 3, analytics: 3, leads: 3, monetize: 3, stories: 4, pitch: 4, roadmap: 4 })[route.parts[1]] || ''}`) : key;
   const view = ROUTES[key];
   const needsWelcome = !store.get('profile.createdAt') && key !== 'welcome' && key !== 'settings';
   if (needsWelcome) {
@@ -135,7 +156,7 @@ onRoute((route) => {
   side.classList.toggle('hide', key === 'welcome');
   topbar.classList.toggle('hide', key === 'welcome');
   document.querySelector('.shell').style.gridTemplateColumns = key === 'welcome' ? '1fr' : '';
-  renderNav(key);
+  renderNav(activeKey);
   clear(main);
   try {
     main.append(view ? view.render(route) : notFound());

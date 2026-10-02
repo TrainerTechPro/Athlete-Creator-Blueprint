@@ -15,6 +15,19 @@ const defaults = () => ({
   posts: [],
   sounds: [],
   bio: {},
+  swipe: [],
+  hooks: [],
+  calendar: [],
+  offer: {},
+  edit: {},
+  missionPlan: {},
+  leads: {},
+  readiness: {},
+  stories: [],
+  pitch: {},
+  roadmap: {},
+  strategy: {},
+  weeks: { w2: { tasks: {}, checkins: {}, goals: {}, review: {} }, w3: { tasks: {}, checkins: {}, goals: {}, review: {} }, w4: { tasks: {}, checkins: {}, goals: {}, review: {} } },
   ai: { code: '' },
   ui: {},
 });
@@ -132,6 +145,27 @@ function normalise(st) {
     for (const k of keys) st[path][k] = obj(st[path][k]);
   }
   st.bio = obj(st.bio);
+  for (const k of ['swipe', 'hooks', 'calendar', 'stories']) st[k] = arr(st[k]).filter((p) => p && typeof p === 'object');
+  for (const k of ['offer', 'edit', 'missionPlan', 'leads', 'readiness', 'pitch', 'roadmap', 'strategy']) st[k] = obj(st[k]);
+  st.stories = st.stories.map((x) => ({ ...x, frames: arr(x.frames).filter((f) => f && typeof f === 'object') }));
+  if (st.roadmap.path) {
+    st.roadmap.weeks = arr(st.roadmap.weeks)
+      .filter((w) => w && typeof w === 'object')
+      .map((w) => ({ ...w, actions: arr(w.actions).filter((a) => a && typeof a === 'object') }));
+  }
+  st.leads.ladder = obj(st.leads.ladder);
+  st.leads.path = obj(st.leads.path);
+  st.leads.profile = obj(st.leads.profile);
+  st.readiness.answers = obj(st.readiness.answers);
+  st.offer.signals = obj(st.offer.signals);
+  st.edit.checks = obj(st.edit.checks);
+  st.edit.signals = obj(st.edit.signals);
+  st.missionPlan.days = obj(st.missionPlan.days);
+  st.weeks = obj(st.weeks);
+  for (const w of ['w2', 'w3', 'w4']) {
+    st.weeks[w] = obj(st.weeks[w]);
+    for (const k of ['tasks', 'checkins', 'goals', 'review']) st.weeks[w][k] = obj(st.weeks[w][k]);
+  }
   return st;
 }
 

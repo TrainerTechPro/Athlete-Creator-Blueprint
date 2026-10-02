@@ -4,6 +4,7 @@ import * as store from '../lib/store.js';
 import { go } from '../lib/router.js';
 import { FORMATS, FORMAT_BY_ID, displayName } from '../content/formats.js';
 import { PLATFORMS } from '../content/archetypes.js';
+import { MISSIONS, MISSION_BY_ID } from '../content/missions.js';
 import { postsThisWeek, progress } from '../progress.js';
 import { crumbs, pageHead, bar, emptyState } from '../ui/components.js';
 
@@ -26,7 +27,7 @@ export function render(route) {
 
 function log(route) {
   const host = h('div', { class: 'stack', style: { '--gap': '18px' } });
-  let editing = route.query.hook || route.query.new ? 'new' : null;
+  let editing = route.query.edit && store.get('posts', []).some((x) => x.id === route.query.edit) ? route.query.edit : route.query.hook || route.query.new ? 'new' : null;
   const prefill = { hook: route.query.hook || '', formatId: route.query.f || '' };
 
   const draw = () => {
@@ -54,12 +55,12 @@ function log(route) {
   const card = (x) => {
     const f = FORMAT_BY_ID[x.formatId];
     const m = x.metrics || {};
-    const metricBits = [['views', 'views'], ['likes', 'likes'], ['comments', 'comments'], ['saves', 'saves'], ['shares', 'shares']].filter(([k]) => num(m[k]) !== null).map(([k, l]) => `${Number(m[k]).toLocaleString()} ${l}`);
+    const metricBits = [['views', 'views'], ['avgWatch', '% watched'], ['likes', 'likes'], ['comments', 'comments'], ['saves', 'saves'], ['shares', 'shares'], ['follows', 'follows'], ['profileVisits', 'profile visits'], ['clicks', 'clicks']].filter(([k]) => num(m[k]) !== null).map(([k, l]) => `${Number(m[k]).toLocaleString()} ${l}`);
     return h('article', { class: `post${x.best ? ' best' : ''}` },
       h('div', { class: 'jersey', style: { width: '44px', height: '44px', fontSize: '1rem' } }, fmtDate(x.date) || '—'),
       h('div', null,
         h('div', { class: 'hook' }, x.hook || 'Untitled post'),
-        h('div', { class: 'meta' }, h('span', { class: 'tag' }, platformLabel(x.platform)), f && h('span', { class: 'tag line' }, displayName(f)), x.pillar && h('span', { class: 'tag line' }, x.pillar), x.best && h('span', { class: 'tag volt' }, 'Resonated ★'), ...metricBits.map((b) => h('span', { class: 'tag line' }, b))),
+        h('div', { class: 'meta' }, h('span', { class: 'tag' }, platformLabel(x.platform)), f && h('span', { class: 'tag line' }, displayName(f)), x.pillar && h('span', { class: 'tag line' }, x.pillar), MISSION_BY_ID[x.mission] && h('span', { class: 'tag line' }, MISSION_BY_ID[x.mission].name), x.best && h('span', { class: 'tag volt' }, 'Resonated ★'), ...metricBits.map((b) => h('span', { class: 'tag line' }, b))),
         x.learned && h('p', { style: { margin: '8px 0 0' } }, h('b', null, 'Lesson: '), x.learned),
         safeUrl(x.link) && h('a', { class: 'link tiny', href: safeUrl(x.link), target: '_blank', rel: 'noopener noreferrer' }, 'Open post'),
       ),
@@ -92,6 +93,9 @@ function log(route) {
     const psel = h('select', { id: 'pf-pillar' }, h('option', { value: '' }, 'Which pillar?'), pillars.map(([k]) => h('option', { value: k }, k[0].toUpperCase() + k.slice(1))));
     psel.value = d.pillar || '';
     psel.addEventListener('change', () => (d.pillar = psel.value));
+    const msel = h('select', { id: 'pf-mission' }, h('option', { value: '' }, 'What job did it do?'), MISSIONS.map((m) => h('option', { value: m.id }, m.name)));
+    msel.value = d.mission || '';
+    msel.addEventListener('change', () => (d.mission = msel.value));
     const learned = h('textarea', { id: 'pf-learned', rows: 3, placeholder: 'What happened? What would you do differently? One lesson to take into the next post.' });
     learned.value = d.learned || '';
     autoGrow(learned);
@@ -108,10 +112,10 @@ function log(route) {
       draw();
     } },
       h('h3', null, existing ? 'Edit post' : 'Log a post'),
-      h('div', { class: 'fields' }, inp('date', 'Date', 'date'), h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-platform' }, 'Platform'), plat), h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-format' }, 'Format'), fsel), h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-pillar' }, 'Pillar'), psel)),
+      h('div', { class: 'fields' }, inp('date', 'Date', 'date'), h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-platform' }, 'Platform'), plat), h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-format' }, 'Format'), fsel), h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-pillar' }, 'Pillar'), psel), h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-mission' }, 'Mission'), msel)),
       inp('hook', 'Hook or short description', 'text', 'The first line or on-screen text'),
       inp('link', 'Link (optional)', 'url', 'https://…'),
-      h('details', null, h('summary', { style: { fontWeight: 700, cursor: 'pointer' } }, 'Add numbers (optional, check back after a day or two)'), h('div', { class: 'fields', style: { marginTop: '10px' } }, met('views', 'Views'), met('likes', 'Likes'), met('comments', 'Comments'), met('saves', 'Saves'), met('shares', 'Shares'))),
+      h('details', { open: !!(d.metrics && Object.values(d.metrics).some((v) => v !== '' && v !== undefined)) }, h('summary', { style: { fontWeight: 700, cursor: 'pointer' } }, 'Add numbers (optional, check back after a day or two)'), h('div', { class: 'fields', style: { marginTop: '10px' } }, met('views', 'Views'), met('avgWatch', 'Avg % watched'), met('likes', 'Likes'), met('comments', 'Comments'), met('saves', 'Saves'), met('shares', 'Shares / sends'), met('follows', 'Follows gained'), met('profileVisits', 'Profile visits'), met('clicks', 'Link clicks / DMs'))),
       h('div', { class: 'field' }, h('label', { class: 'lbl', for: 'pf-learned' }, 'Feedback → what I learned'), learned),
       h('label', { class: 'choice' }, best, h('span', null, h('b', null, 'This one resonated'), h('small', null, 'Flag the posts to learn from and repeat.'))),
       h('div', { class: 'row' }, h('button', { class: 'btn lg', type: 'submit' }, existing ? 'Save changes' : 'Log post'), h('button', { class: 'btn ghost', type: 'button', onclick: () => { editing = null; draw(); } }, 'Cancel')),

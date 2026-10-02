@@ -14,8 +14,13 @@ It replaces "read a PDF and write on the lines" with a guided experience: one qu
 | **3 Weekly Challenge** | Three guided builders (confession B-roll, Bad/Good/Excellent, Expectation vs Reality) with a live phone preview, caption builder and quality checklist. |
 | **4 Week 1 Plan** | Weekly goals (auto-tracked where possible), 7 days of tasks and check-ins, a review-question coach, a bio builder and a weekly review. |
 | **Tools** | Post Log with a learn loop, Sound Bank, **My Blueprint** document (print to PDF, copy as text, download Markdown), backup and restore. |
+| **Week 2: Formats and workflow** | **Reference breakdowns** (study 7 posts and find the pattern), **Hook Lab** (a transparent 6-point hook checklist and a hook bank), **Content Calendar** (idea to posted, with batch tips), **Edit and pre-flight** checklist, **How discovery works** (with sources) and an **Offer Sketch**. |
+| **Week 3: Content missions** | **Mission Planner** (attract, nurture, position, convert; your 14-day mix vs a suggested split; a week plan), **Analytics Reader** (compares each post to *your own* median and flags breakouts, weak holds, reach without follows), **Leads and CTAs** (call-to-action ladder, lead path, profile check) and a **Monetisation check** (readiness quiz, six paths, FTC disclosure and athlete-earnings rules). |
+| **Week 4: Stories and selling** | **Story sequencer** (connect, teach, validate and sell templates with checks), **Offer pitch** (Struggle, Move, Win, with caption and DM reply), **30-day roadmap** (four paths, editable and tick-off) and a printable **Strategy one-pager** with journey stats. |
 
-Weeks 2 to 4 are shown on the roadmap as "coming next". The two workbooks this was built from covered onboarding and week 1 only.
+Each of Weeks 2 to 4 also has goals (auto-tracked from the tools where possible), seven days of tasks with check-ins, Do's and Don'ts, a mini FAQ and a weekly review.
+
+> **How Weeks 2 to 4 were made.** The workbooks provided covered onboarding and Week 1 in full, and only an outline (themes and lesson titles) for Weeks 2 to 4. Those weeks are therefore original designs built from that outline, not a translation of the full workbooks. Platform and rules notes were checked against public sources in October 2026 and are labelled as such in the app. Review them before you rely on them.
 
 ## Run it
 
@@ -68,10 +73,12 @@ Content lives in `public/js/content/`:
 | `formats.js` | The 15 formats, hook templates, format matcher |
 | `challenge.js` | The three challenge builders and their quality checks |
 | `plan.js` | Week 1 goals and days, review-question checker, bio helper, roadmap |
+| `weeks.js` | Weeks 2 to 4: goals, seven days each, check-ins, Do's and Don'ts, FAQ |
+| `hooks.js`, `analytics.js`, `missions.js`, `sales.js`, `editing.js` | Hook scoring, analytics diagnosis, missions and mix, offers/CTAs/stories/pitch/roadmap, pre-flight and discovery |
 | `start.js` | Launch checklist, mindset, athlete safety, starting-point reflections |
 | `archetypes.js` | Athlete types (college, pro, youth, retired, coach), pillar ideas, platforms |
 
-To add Week 2, add a content file and a view, then register the route in `public/js/main.js`.
+To add a tool, add an entry to `content/toolmeta.js`, a file in `views/tools/`, and register it in `views/tools.js`. Week hubs list tools via `content/weeks.js`.
 
 ## How the built-in coach works
 

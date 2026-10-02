@@ -52,6 +52,7 @@ export function toast(message, tone = 'ok') {
     host = h('div', { id: 'toasts', 'aria-live': 'polite' });
     document.body.append(host);
   }
+  host.replaceChildren(); // one toast at a time, so rapid actions do not stack over the page
   const t = h('div', { class: `toast toast-${tone}`, role: 'status' }, message);
   host.append(t);
   setTimeout(() => t.classList.add('out'), 2600);
